@@ -1,0 +1,308 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+
+class CameraScreen extends StatefulWidget {
+  const CameraScreen({super.key});
+
+  @override
+  State<CameraScreen> createState() => _CameraScreenState();
+}
+
+class _CameraScreenState extends State<CameraScreen> {
+  CameraController? _controller;
+  Future<void>? _initializeControllerFuture;
+  bool _hasPermission = false;
+  String? _error;
+  bool _isAnalyzing = false;
+  Timer? _timer;
+  Duration _interval = const Duration(milliseconds: 1500);
+  AnalysisResult? _lastResult;
+  Uint8List? _lastCapturedJpeg;
+  String? _apiResult;
+  late GenerativeModel _geminiModel;
+  bool _isApiReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initCamera();
+    _initGemini();
+    _loadInterval();
+  }
+
+  Future<void> _loadInterval() async {
+    await dotenv.load();
+    final ms =
+        int.tryParse(dotenv.env['FRAME_CAPTURE_INTERVAL_MS'] ?? '1500') ?? 1500;
+    setState(() {
+      _interval = Duration(milliseconds: ms);
+    });
+  }
+
+  Future<void> _initGemini() async {
+    await dotenv.load();
+    final apiKey = dotenv.env['GOOGLE_API_KEY'];
+    if (apiKey == null || apiKey.isEmpty) {
+      setState(() {
+        _error = 'Gemini API key not found in .env';
+      });
+      return;
+    }
+    try {
+      _geminiModel =
+          GenerativeModel(model: 'gemini-pro-vision', apiKey: apiKey);
+      setState(() {
+        _isApiReady = true;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to initialize Gemini API: $e';
+      });
+    }
+  }
+
+  Future<void> _initCamera() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        setState(() {
+          _error = 'No cameras found on device.';
+        });
+        return;
+      }
+      _controller = CameraController(
+        cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.back,
+            orElse: () => cameras.first),
+        ResolutionPreset.high,
+      );
+      _initializeControllerFuture = _controller!.initialize();
+      setState(() {
+        _hasPermission = true;
+      });
+    } on CameraException catch (e) {
+      setState(() {
+        _error = 'Camera error: ${e.description}';
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Permission denied or unknown error.';
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  void _toggleAnalysis() {
+    setState(() {
+      _isAnalyzing = !_isAnalyzing;
+    });
+    if (_isAnalyzing) {
+      _startTimer();
+    } else {
+      _timer?.cancel();
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(_interval, (_) => _captureAndAnalyzeFrame());
+  }
+
+  Future<void> _captureAndAnalyzeFrame() async {
+    if (_controller == null || !_controller!.value.isInitialized) return;
+    try {
+      final XFile file = await _controller!.takePicture();
+      final bytes = await file.readAsBytes();
+      setState(() {
+        _lastCapturedJpeg = bytes;
+      });
+      await _sendToGemini(bytes);
+    } catch (e) {
+      setState(() {
+        _error = 'Frame capture error: $e';
+      });
+    }
+  }
+
+  Future<void> _sendToGemini(Uint8List imageBytes) async {
+    if (!_isApiReady) return;
+    try {
+      const prompt = 'Analyze this image.';
+      final response = await _geminiModel.generateContent([
+        Content.multi([TextPart(prompt), DataPart('image/jpeg', imageBytes)])
+      ]);
+      // Parse response for overlay
+      AnalysisResult? result;
+      try {
+        final jsonMap = json.decode(response.text ?? '{}');
+        result = AnalysisResult.fromJson(jsonMap);
+      } catch (_) {}
+      setState(() {
+        _apiResult = response.text;
+        _lastResult = result;
+      });
+    } catch (e) {
+      setState(() {
+        _apiResult = 'API error: $e';
+        _lastResult = null;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Camera')),
+        body: Center(child: Text(_error!)),
+      );
+    }
+    if (!_hasPermission) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Camera')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    return Scaffold(
+      appBar: AppBar(title: const Text('Camera')),
+      body: FutureBuilder<void>(
+        future: _initializeControllerFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            final previewSize = _controller!.value.previewSize;
+            final aspectRatio = previewSize != null
+                ? previewSize.width / previewSize.height
+                : 1.0;
+            return Stack(
+              children: [
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: aspectRatio,
+                    child: CameraPreview(_controller!),
+                  ),
+                ),
+                if (_lastResult != null)
+                  CustomPaint(
+                    painter: _OverlayPainter(_lastResult!.objects),
+                    size: Size.infinite,
+                  ),
+                if (_lastResult != null && _lastResult!.sceneContext.isNotEmpty)
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      color: Colors.black.withOpacity(0.5),
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        _lastResult!.sceneContext,
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                if (_lastCapturedJpeg != null)
+                  Positioned(
+                    left: 8,
+                    top: 8,
+                    child: Text(
+                      'Last frame: ${_lastCapturedJpeg!.lengthInBytes} bytes',
+                      style: const TextStyle(
+                          color: Colors.white, backgroundColor: Colors.black54),
+                    ),
+                  ),
+                if (_apiResult != null)
+                  Positioned(
+                    left: 8,
+                    top: 32,
+                    child: Text(
+                      'Gemini API result: $_apiResult',
+                      style: const TextStyle(
+                          color: Colors.white, backgroundColor: Colors.black54),
+                    ),
+                  ),
+              ],
+            );
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Camera error: ${snapshot.error}'));
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _toggleAnalysis,
+        tooltip: _isAnalyzing ? 'Stop Analysis' : 'Start Analysis',
+        child: Icon(_isAnalyzing ? Icons.stop : Icons.play_arrow),
+      ),
+    );
+  }
+}
+
+class _OverlayPainter extends CustomPainter {
+  final List<DetectedObject> objects;
+  _OverlayPainter(this.objects);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.red.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+    const textStyle = TextStyle(
+        color: Colors.yellow, fontSize: 14, backgroundColor: Colors.black54);
+    for (final obj in objects) {
+      canvas.drawRect(obj.bbox, paint);
+      final tp = TextPainter(
+        text: TextSpan(text: obj.label, style: textStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(obj.bbox.left, obj.bbox.top - tp.height));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class DetectedObject {
+  final Rect bbox;
+  final String label;
+  DetectedObject({required this.bbox, required this.label});
+  factory DetectedObject.fromJson(Map<String, dynamic> json) {
+    final box = json['bbox'];
+    return DetectedObject(
+      bbox: Rect.fromLTWH(
+        (box['x'] as num).toDouble(),
+        (box['y'] as num).toDouble(),
+        (box['w'] as num).toDouble(),
+        (box['h'] as num).toDouble(),
+      ),
+      label: json['label'] ?? '',
+    );
+  }
+}
+
+class AnalysisResult {
+  final List<DetectedObject> objects;
+  final String sceneContext;
+  AnalysisResult({required this.objects, required this.sceneContext});
+  factory AnalysisResult.fromJson(Map<String, dynamic> json) {
+    final objs = (json['objects'] as List?)
+            ?.map((e) => DetectedObject.fromJson(e))
+            .toList() ??
+        [];
+    return AnalysisResult(
+      objects: objs,
+      sceneContext: json['scene_context'] ?? '',
+    );
+  }
+}
