@@ -3,7 +3,7 @@ import 'package:camera/camera.dart';
 import '../models/app_state.dart';
 import '../../core/constants/app_constants.dart';
 
-/// Camera service for camera operations
+/// Camera service for handling camera operations
 class CameraService {
   CameraController? _controller;
   CameraState _state = CameraState.uninitialized;
@@ -21,10 +21,10 @@ class CameraService {
   Future<bool> initialize() async {
     try {
       _setState(CameraState.initializing);
-
+      
       final cameras = await availableCameras();
       _availableCameras = cameras;
-
+      
       if (_availableCameras.isEmpty) {
         _setError(AppConstants.noCamerasFound);
         return false;
@@ -63,10 +63,10 @@ class CameraService {
 
     try {
       _setState(CameraState.capturing);
-
+      
       final XFile file = await _controller!.takePicture();
       final bytes = await file.readAsBytes();
-
+      
       _setState(CameraState.ready);
       return bytes;
     } catch (e) {
@@ -86,7 +86,7 @@ class CameraService {
       final nextCamera = _availableCameras[nextIndex];
 
       await dispose();
-
+      
       _controller = CameraController(
         nextCamera,
         ResolutionPreset.high,

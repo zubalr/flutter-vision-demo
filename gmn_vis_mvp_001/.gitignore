@@ -44,6 +44,5 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# .env
-# Add your API keys and environment variables here
-GOOGLE_API_KEY=
+*.env
+*.md

@@ -40,7 +40,7 @@ class DetectionOverlayPainter extends CustomPainter {
     );
 
     final paint = Paint()
-      ..color = _getColorForLabel(object.label).withOpacity(opacity)
+      ..color = _getColorForLabel(object.label).withValues(alpha: opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0;
 
@@ -65,7 +65,7 @@ class DetectionOverlayPainter extends CustomPainter {
           Shadow(
             offset: const Offset(1, 1),
             blurRadius: 2,
-            color: Colors.black.withOpacity(0.8),
+            color: Colors.black.withValues(alpha: 0.8),
           ),
         ],
       ),
@@ -88,7 +88,7 @@ class DetectionOverlayPainter extends CustomPainter {
     );
 
     final backgroundPaint = Paint()
-      ..color = _getColorForLabel(object.label).withOpacity(0.8);
+      ..color = _getColorForLabel(object.label).withValues(alpha: 0.8);
 
     canvas.drawRect(backgroundRect, backgroundPaint);
 

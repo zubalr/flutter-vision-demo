@@ -6,7 +6,7 @@ import '../models/analysis_result.dart';
 import '../models/app_state.dart';
 import '../../core/constants/app_constants.dart';
 
-/// Gemini service for image analysis
+/// Gemini AI service for image analysis
 class GeminiService {
   GenerativeModel? _model;
   ApiState _state = ApiState.uninitialized;
@@ -90,23 +90,8 @@ class GeminiService {
         objects: [],
         sceneDescription: responseText,
         contextualInformation: null,
-        overallConfidence: null,
-        metadata: {
-          'raw_response': responseText,
-          'parsing_method': 'fallback',
-        },
       );
     }
-  }
-
-  /// Get analysis configuration
-  Map<String, dynamic> getConfiguration() {
-    return {
-      'model': AppConstants.geminiModel,
-      'state': _state.toString(),
-      'has_api_key': _apiKey != null,
-      'is_ready': isReady,
-    };
   }
 
   void _setState(ApiState newState) {

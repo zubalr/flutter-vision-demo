@@ -23,37 +23,6 @@ class DetectedObject {
       description: json['description']?.toString(),
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'label': label,
-      'confidence': confidence,
-      'bbox': boundingBox.toJson(),
-      if (description != null) 'description': description,
-    };
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is DetectedObject &&
-        other.id == id &&
-        other.label == label &&
-        other.confidence == confidence &&
-        other.boundingBox == boundingBox &&
-        other.description == description;
-  }
-
-  @override
-  int get hashCode {
-    return Object.hash(id, label, confidence, boundingBox, description);
-  }
-
-  @override
-  String toString() {
-    return 'DetectedObject(id: $id, label: $label, confidence: $confidence, boundingBox: $boundingBox, description: $description)';
-  }
 }
 
 /// Bounding box model for detected objects
@@ -77,34 +46,5 @@ class BoundingBox {
       width: (json['w'] as num?)?.toDouble() ?? 0.0,
       height: (json['h'] as num?)?.toDouble() ?? 0.0,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'x': x,
-      'y': y,
-      'w': width,
-      'h': height,
-    };
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is BoundingBox &&
-        other.x == x &&
-        other.y == y &&
-        other.width == width &&
-        other.height == height;
-  }
-
-  @override
-  int get hashCode {
-    return Object.hash(x, y, width, height);
-  }
-
-  @override
-  String toString() {
-    return 'BoundingBox(x: $x, y: $y, width: $width, height: $height)';
   }
 }

@@ -1,4 +1,4 @@
-/// App state types
+/// Application state enumeration
 enum AppState {
   initial,
   loading,
@@ -6,7 +6,7 @@ enum AppState {
   error,
 }
 
-/// Camera state types
+/// Camera state enumeration
 enum CameraState {
   uninitialized,
   initializing,
@@ -16,7 +16,7 @@ enum CameraState {
   disposed,
 }
 
-/// Analysis state types
+/// Analysis state enumeration
 enum AnalysisState {
   idle,
   analyzing,
@@ -24,7 +24,7 @@ enum AnalysisState {
   error,
 }
 
-/// API state types
+/// API state enumeration
 enum ApiState {
   uninitialized,
   initializing,
@@ -33,7 +33,7 @@ enum ApiState {
   error,
 }
 
-/// Permission state types
+/// Permission state enumeration
 enum PermissionState {
   unknown,
   granted,

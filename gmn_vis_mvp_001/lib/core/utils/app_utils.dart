@@ -1,4 +1,4 @@
-/// Utility functions for this app
+/// Utility functions for the app
 class AppUtils {
   /// Format timestamp to readable string
   static String formatTimestamp(DateTime timestamp) {

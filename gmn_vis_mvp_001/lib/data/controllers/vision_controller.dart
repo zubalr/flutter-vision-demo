@@ -7,7 +7,7 @@ import '../services/camera_service.dart';
 import '../services/gemini_service.dart';
 import '../../core/constants/app_constants.dart';
 
-/// Main controller for vision analysis
+/// Main controller for the vision analysis app
 class VisionController {
   // Services
   final CameraService _cameraService = CameraService();

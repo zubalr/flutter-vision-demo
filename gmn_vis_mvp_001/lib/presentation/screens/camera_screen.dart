@@ -7,7 +7,7 @@ import '../widgets/detection_overlay.dart';
 import '../widgets/analysis_info_panel.dart';
 import '../../core/constants/app_constants.dart';
 
-/// Camera screen with vision analysis
+/// Modern camera screen with vision analysis
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
 
@@ -79,7 +79,7 @@ class _CameraScreenState extends State<CameraScreen>
           CircularProgressIndicator(color: Colors.white),
           SizedBox(height: 16),
           Text(
-            'Starting camera and analysis...',
+            'Initializing camera and AI services...',
             style: TextStyle(color: Colors.white),
           ),
         ],
@@ -200,7 +200,7 @@ class _CameraScreenState extends State<CameraScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withOpacity(0.7),
+              Colors.black.withValues(alpha: 0.7),
               Colors.transparent,
             ],
           ),
@@ -295,7 +295,7 @@ class _CameraScreenState extends State<CameraScreen>
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
             colors: [
-              Colors.black.withOpacity(0.7),
+              Colors.black.withValues(alpha: 0.7),
               Colors.transparent,
             ],
           ),
@@ -332,8 +332,8 @@ class _CameraScreenState extends State<CameraScreen>
                     }
                   },
                   backgroundColor: isAnalyzing
-                      ? Colors.red.withOpacity(0.9)
-                      : Colors.blue.withOpacity(0.9),
+                      ? Colors.red.withValues(alpha: 0.9)
+                      : Colors.blue.withValues(alpha: 0.9),
                   icon: Icon(
                     isAnalyzing ? Icons.stop : Icons.play_arrow,
                     color: Colors.white,
