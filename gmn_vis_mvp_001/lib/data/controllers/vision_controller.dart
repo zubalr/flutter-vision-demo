@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:math' as math;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/analysis_result.dart';
 import '../models/app_state.dart';
@@ -91,10 +92,12 @@ class VisionController {
   /// Start continuous analysis
   Future<void> startAnalysis() async {
     if (!canStartAnalysis) {
-      _setError('Cannot start analysis in current state');
+      print(
+          'Debug: Cannot start analysis - app state: $_appState, analysis state: $_analysisState');
       return;
     }
 
+    print('Debug: Starting continuous analysis...');
     _setAnalysisState(AnalysisState.analyzing);
     _startAnalysisTimer();
   }
@@ -109,18 +112,26 @@ class VisionController {
   /// Capture and analyze a single frame
   Future<void> captureAndAnalyze() async {
     if (!isReady) {
-      _setError('Services not ready for analysis');
-      return;
+      print('Debug: Services not ready for analysis, app state: $_appState');
+      return; // Don't set error for continuous analysis
     }
 
     try {
-      _setAnalysisState(AnalysisState.analyzing);
+      // Check if this is continuous analysis or single shot
+      final isContinuousAnalysis = _analysisState == AnalysisState.analyzing;
+
+      // For single shot analysis, set analyzing state
+      if (!isContinuousAnalysis) {
+        _setAnalysisState(AnalysisState.analyzing);
+      }
 
       // Capture frame
       final imageBytes = await _cameraService.captureFrame();
       if (imageBytes == null) {
-        _setError(_cameraService.errorMessage ?? 'Failed to capture frame');
-        _setAnalysisState(AnalysisState.error);
+        print('Debug: Failed to capture frame: ${_cameraService.errorMessage}');
+        if (!isContinuousAnalysis) {
+          _setAnalysisState(AnalysisState.idle);
+        }
         return;
       }
 
@@ -129,17 +140,28 @@ class VisionController {
       // Analyze frame
       final result = await _geminiService.analyzeImage(imageBytes);
       if (result == null) {
-        _setError(_geminiService.errorMessage ?? 'Failed to analyze image');
-        _setAnalysisState(AnalysisState.error);
+        print('Debug: Analysis returned null, continuing...');
+        if (!isContinuousAnalysis) {
+          _setAnalysisState(AnalysisState.idle);
+        }
         return;
       }
 
       _lastResult = result;
       _resultController.add(result);
-      _setAnalysisState(AnalysisState.completed);
+
+      // Set completed state for single shot analysis
+      if (!isContinuousAnalysis) {
+        _setAnalysisState(AnalysisState.completed);
+      }
+
+      print(
+          'Debug: Analysis completed successfully - scene: ${result.sceneDescription.substring(0, math.min(50, result.sceneDescription.length))}..., objects: ${result.objects.length}');
     } catch (e) {
-      _setError('Analysis failed: $e');
-      _setAnalysisState(AnalysisState.error);
+      print('Debug: Analysis failed: $e');
+      if (_analysisState != AnalysisState.analyzing) {
+        _setAnalysisState(AnalysisState.idle);
+      }
     }
   }
 
@@ -184,7 +206,8 @@ class VisionController {
   void _startAnalysisTimer() {
     _analysisTimer?.cancel();
     _analysisTimer = Timer.periodic(_captureInterval, (_) async {
-      if (isAnalyzing) {
+      // Only trigger analysis if we're in continuous analyzing mode
+      if (_analysisState == AnalysisState.analyzing) {
         await captureAndAnalyze();
       }
     });

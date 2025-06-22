@@ -5,6 +5,7 @@ import '../../data/models/app_state.dart';
 import '../../data/models/analysis_result.dart';
 import '../widgets/detection_overlay.dart';
 import '../widgets/analysis_info_panel.dart';
+import '../widgets/draggable_json_panel.dart';
 import '../../core/constants/app_constants.dart';
 
 /// Modern camera screen with vision analysis
@@ -174,6 +175,29 @@ class _CameraScreenState extends State<CameraScreen>
         // Top app bar
         _buildTopAppBar(),
 
+        // JSON output panel
+        StreamBuilder<AnalysisResult?>(
+          stream: _controller.resultStream,
+          builder: (context, resultSnapshot) {
+            return StreamBuilder<AnalysisState>(
+              stream: _controller.analysisStateStream,
+              builder: (context, stateSnapshot) {
+                return StreamBuilder<String?>(
+                  stream: _controller.errorStream,
+                  builder: (context, errorSnapshot) {
+                    return DraggableJsonPanel(
+                      result: resultSnapshot.data,
+                      isAnalyzing:
+                          stateSnapshot.data == AnalysisState.analyzing,
+                      errorMessage: errorSnapshot.data,
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
+
         // Analysis info panel
         if (_showAnalysisPanel) _buildAnalysisPanel(),
 
@@ -322,7 +346,7 @@ class _CameraScreenState extends State<CameraScreen>
               builder: (context, snapshot) {
                 final isAnalyzing = snapshot.data == AnalysisState.analyzing;
 
-                return FloatingActionButton.extended(
+                return FloatingActionButton(
                   heroTag: 'analysis',
                   onPressed: () async {
                     if (isAnalyzing) {
@@ -334,13 +358,9 @@ class _CameraScreenState extends State<CameraScreen>
                   backgroundColor: isAnalyzing
                       ? Colors.red.withValues(alpha: 0.9)
                       : Colors.blue.withValues(alpha: 0.9),
-                  icon: Icon(
+                  child: Icon(
                     isAnalyzing ? Icons.stop : Icons.play_arrow,
                     color: Colors.white,
-                  ),
-                  label: Text(
-                    isAnalyzing ? 'Stop' : 'Analyze',
-                    style: const TextStyle(color: Colors.white),
                   ),
                 );
               },

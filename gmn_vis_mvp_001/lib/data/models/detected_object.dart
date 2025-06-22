@@ -43,8 +43,8 @@ class BoundingBox {
     return BoundingBox(
       x: (json['x'] as num?)?.toDouble() ?? 0.0,
       y: (json['y'] as num?)?.toDouble() ?? 0.0,
-      width: (json['w'] as num?)?.toDouble() ?? 0.0,
-      height: (json['h'] as num?)?.toDouble() ?? 0.0,
+      width: (json['width'] as num?)?.toDouble() ?? 0.0,
+      height: (json['height'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }
