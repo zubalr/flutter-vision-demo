@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to the camera to capture photos for AI analysis and vision processing features.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to the microphone for video recording functionality.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to the photo library to save captured images.</string>
 </dict>
 </plist>
