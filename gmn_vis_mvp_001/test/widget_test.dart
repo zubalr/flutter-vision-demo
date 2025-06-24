@@ -18,7 +18,7 @@ void main() {
 
     // Verify that the app starts with the MaterialApp structure
     expect(find.byType(MaterialApp), findsOneWidget);
-    
+
     // Verify that the main scaffold is present
     expect(find.byType(Scaffold), findsOneWidget);
   });
