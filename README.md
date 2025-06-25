@@ -1,6 +1,6 @@
-# 🤖 Flutter Vision Demo - Real-time AI Object Detection
+# 🤖 Flutter Vision Demo - Real-time AI Scene Analysis
 
-> **A production-ready Flutter application demonstrating advanced computer vision capabilities using Google's Gemini 2.5 Flash AI for real-time object detection and scene analysis.**
+> **A production-ready Flutter application demonstrating advanced computer vision capabilities using Google's Gemini 2.5 Flash AI for real-time scene analysis and understanding.**
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
@@ -11,7 +11,7 @@
 
 <!-- Add screenshots here when available -->
 
-> **Live Demo**: Real-time object detection with bounding boxes, confidence scores, and interactive UI panels.
+> **Live Demo**: Real-time scene analysis with confidence scores and interactive UI panels.
 
 ## 🎯 Project Overview
 
@@ -19,8 +19,7 @@ This Flutter application represents a comprehensive implementation of modern mob
 
 ### Core Capabilities
 
-- **🎥 Real-time Object Detection**: Live camera analysis with sub-2-second response times
-- **🎯 Visual Overlays**: Precise bounding box rendering with confidence indicators
+- **🎥 Real-time Scene Analysis**: Live camera analysis with sub-2-second response times
 - **🤖 Advanced AI Integration**: Google Gemini 2.5 Flash with structured prompt engineering
 - **📊 Interactive UI**: Draggable, resizable panels with gesture recognition
 - **⚡ Performance Optimized**: Stream-based reactive architecture for 60fps rendering
@@ -84,47 +83,45 @@ Timer.periodic(_captureInterval, (_) async {
 - No UI blocking or freezing
 - Configurable performance vs. accuracy trade-offs
 
-#### Challenge 2: Accurate Object Detection Visualization
+#### Challenge 2: Structured AI Response Processing
 
-**Problem**: AI returns text descriptions, need precise visual overlays on camera feed.
+**Problem**: AI returns free-form text, need consistent structured data for reliable parsing.
 
 **Solution Implemented:**
 
 ```dart
-// Structured JSON prompts ensure consistent coordinate data
+// Structured JSON prompts ensure consistent data format
 static const String defaultAnalysisPrompt = '''
 {
   "objects": [
     {
       "name": "object name",
       "confidence": 0.95,
-      "bounding_box": {
-        "x": 100, "y": 150, "width": 200, "height": 120
-      }
+      "location": "spatial description",
+      "details": "descriptive information"
     }
   ]
 }
 ''';
 
-// Custom painter for hardware-accelerated overlay rendering
-class DetectionOverlayPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Scale coordinates to current screen size
-    final scaleX = size.width / previewSize.width;
-    final scaleY = size.height / previewSize.height;
-
-    // Draw precise bounding boxes
-    canvas.drawRect(scaledRect, paint);
+// Robust JSON parsing with fallback handling
+class AnalysisResult {
+  factory AnalysisResult.fromJson(Map<String, dynamic> json) {
+    // Parse structured response with error handling
+    return AnalysisResult(
+      objects: _parseObjects(json['objects'] ?? []),
+      sceneDescription: json['scene'] ?? '',
+      contextualInformation: json['context'] ?? '',
+    );
   }
 }
 ```
 
 **Results**:
 
-- Pixel-perfect object highlighting
-- Smooth real-time overlay updates
-- Confidence-based color coding (green > 80%, orange > 60%, red < 60%)
+- Consistent data structure across all AI responses
+- Reliable parsing with graceful error handling
+- Rich scene understanding with contextual information
 
 #### Challenge 3: Mobile Resource Management
 
@@ -223,11 +220,11 @@ Device: Physical device with camera (recommended)
 - **Rationale**: Lightweight, direct control, educational value
 - **Trade-off**: More boilerplate vs. better learning experience
 
-**2. CustomPainter vs. Widget Overlays**
+**2. Stream-Based Processing vs. Widget Panels**
 
-- **Chosen**: CustomPainter for detection overlays
-- **Rationale**: 60fps performance, pixel-perfect positioning
-- **Trade-off**: More complex code vs. smooth real-time rendering
+- **Chosen**: Reactive streams for real-time data display
+- **Rationale**: 60fps performance, responsive UI updates
+- **Trade-off**: More complex architecture vs. smooth real-time rendering
 
 **3. Gemini 2.5 Flash vs. Pro**
 
@@ -243,7 +240,7 @@ Device: Physical device with camera (recommended)
 - **UI Frame Rate**: Consistent 60fps during analysis
 - **Memory Usage**: <150MB peak with active camera + AI
 - **Battery Impact**: 15% per hour of continuous use
-- **Object Detection Accuracy**: 87% precision on test dataset
+- **Object Recognition Accuracy**: 87% precision on test dataset
 
 ### Optimization Techniques Applied
 
@@ -295,7 +292,7 @@ Complete learning materials available in `/documentation/`:
 
 This architecture pattern applies to:
 
-- **📱 Augmented Reality**: Real-time object recognition and overlay systems
+- **📱 Augmented Reality**: Real-time scene understanding and analysis systems
 - **🛡️ Security Applications**: Surveillance and monitoring with AI analysis
 - **🛒 Retail Solutions**: Product recognition and inventory management
 - **♿ Accessibility Tools**: Scene description for visually impaired users
@@ -306,7 +303,7 @@ This architecture pattern applies to:
 
 ### Current Status: MVP Complete ✅
 
-- [x] Real-time object detection
+- [x] Real-time scene analysis
 - [x] Interactive UI with gesture controls
 - [x] Production-ready architecture
 - [x] Comprehensive documentation
@@ -314,7 +311,7 @@ This architecture pattern applies to:
 ### Future Enhancements
 
 - [ ] **Multi-object Tracking**: Persistent object IDs across frames
-- [ ] **Custom Model Training**: Domain-specific object detection
+- [ ] **Custom Model Training**: Domain-specific scene analysis
 - [ ] **AR Integration**: 3D object positioning and virtual anchors
 - [ ] **Cloud Sync**: Analysis history and user preferences
 - [ ] **Offline Mode**: Local AI models for network-independent operation
@@ -460,7 +457,7 @@ This project includes detailed documentation for developers at all levels:
 
 This codebase demonstrates patterns useful for:
 
-- **Augmented Reality Apps**: Real-time object recognition and overlay
+- **Augmented Reality Apps**: Real-time scene understanding and analysis
 - **Security Applications**: Surveillance and monitoring systems
 - **Retail Solutions**: Product recognition and inventory management
 - **Accessibility Tools**: Scene description for visually impaired users
