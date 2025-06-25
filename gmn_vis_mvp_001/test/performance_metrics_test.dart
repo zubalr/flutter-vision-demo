@@ -83,8 +83,8 @@ void main() {
           objects: List.generate(
               random.nextInt(5) + 1,
               (index) => DetectedObject(
-                    id: 'obj_${i}_${index}',
-                    label: 'Object_${index}',
+                    id: 'obj_${i}_$index',
+                    label: 'Object_$index',
                     confidence: random.nextDouble(),
                     boundingBox: BoundingBox(
                       x: random.nextDouble() * 100,
@@ -120,7 +120,7 @@ void main() {
       final processingTime = stopwatch.elapsedMicroseconds;
 
       print(
-          '📊 METRIC: Image processing time for ${testDataSize} bytes: ${processingTime}µs');
+          '📊 METRIC: Image processing time for $testDataSize bytes: $processingTimeµs');
       print(
           '📊 METRIC: Processing speed: ${(testDataSize / processingTime * 1000000).toStringAsFixed(2)} bytes/second');
 
